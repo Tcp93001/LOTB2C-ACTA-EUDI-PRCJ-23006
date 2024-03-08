@@ -1,4 +1,4 @@
-import "../styles/ExpenseDate.css";
+import "./ExpenseDate.css";
 
 function ExpenseDate(props) {
   // LOGICA
