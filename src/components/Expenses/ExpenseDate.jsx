@@ -1,4 +1,4 @@
-import "./ExpenseDate.css";
+import styles from "./ExpenseDate.module.css";
 
 function ExpenseDate(props) {
   // LOGICA
@@ -8,10 +8,10 @@ function ExpenseDate(props) {
 
   return (
     // PRESENTACION
-    <div className="expense-date">
-      <div className="expense-date-month">{month}</div>
-      <div className="expense-date-year">{year}</div>
-      <div className="expense-date-day">{day}</div>
+    <div className={styles["expense-date"]}>
+      <div className={styles["expense-date-month"]}>{month}</div>
+      <div className={styles["expense-date-year"]}>{year}</div>
+      <div className={styles["expense-date-day"]}>{day}</div>
     </div>
   );
 }
