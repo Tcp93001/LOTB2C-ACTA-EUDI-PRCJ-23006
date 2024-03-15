@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
+import Button from "../UI/Button";
+import Modal from "../UI/Modal";
 import styled from "styled-components";
 
 // Los styled components pueden ir en un archivo desde donde se importen, o se pueden dejar
@@ -41,37 +43,19 @@ const FormActions = styled.div`
   text-align: right;
 `;
 
-const Button = styled.button`
-font: inherit;
-cursor: pointer;
-padding: 0.5rem 1rem;
-border: 1px solid #464646;
-background-color: #464646;
-color: #e5e5e5;
-border-radius: 12px;
-margin-right: 1rem;
-width: 100%;
-
-&:hover,
-&:active {
-  background-color: #AFAFAF;
-  border-color: #AFAFAF;
-  color: black;
-  font-weight: 600;
-}
-
-@media(min-width: 768px) {
-  width: auto;
-}
-`;
-
 const ExpenseForm = ({onSaveExpense}) => {
-  const [isValid, setIsValid] = useState(true);
+  const [error, setError] = useState(null);
+  const [isDateValid, setIsDateValid] =useState(true);
+  const [isTitleValid, setIsTitleValid] =useState(true);
+  const [isAmountValid, setIsAmountValid] =useState(true);
   const [expense, setExpense] = useState({
     title: '',
     amount: '',
     date: ''
   });
+  const titleRef = useRef(null);
+
+  const toggleModal = () => setError(null);
 
   const dataChangeHandler = (event) => {
     setExpense((prevState) => ({
@@ -79,6 +63,42 @@ const ExpenseForm = ({onSaveExpense}) => {
       [event.target.name]: event.target.value
     }))
   };
+
+  const dateChangeHandler = (event) => {
+    setIsDateValid(true)
+    const { value } = event.target
+
+    // comparacion de fechas
+    const currentDate = new Date();
+    const date = new Date(value);
+    if (date > currentDate) {
+      setIsDateValid(false);
+      setError({
+        title: 'Fecha inválida',
+        message: `La fecha no debe ser mayor a ${date.toLocaleDateString()}`
+      })
+    }
+
+    setExpense((prevState) => ({
+      ...prevState,
+      date: value
+    }))
+  }
+
+  const validateFields = () => {
+    if(expense.title.trim().length === 0) {
+      setIsTitleValid(false);
+      titleRef.current.focus()
+    }
+
+    if(expense.amount.trim().length === 0) {
+      setIsAmountValid(false);
+    }
+
+    if(expense.date.trim().length === 0) {
+      setIsDateValid(false);
+    }
+  }
 
   const submitHandler = (event) => {
     event.preventDefault();
@@ -90,25 +110,28 @@ const ExpenseForm = ({onSaveExpense}) => {
       date: new Date(expense.date)
     }
 
-    if (
-      expense.title.trim().length === 0 ||
-      expense.amount.trim().length === 0 ||
-      expense.date.trim().length === 0
-    ) {
-      setIsValid(false);
-      return;
-    } else {
-      setIsValid(true)
+    validateFields()
+    // if (
+    //   expense.title.trim().length === 0 ||
+    //   expense.amount.trim().length === 0 ||
+    //   expense.date.trim().length === 0
+    // ) {
+    //   setIsValid(false);
+    //   return;
+    // } else {
+    //   setIsValid(true)
+    // }
+
+    if(isDateValid && isAmountValid && isTitleValid) {
+      onSaveExpense(expenseResult);
+
+      // Limpiar mi formulario
+      setExpense({
+        title: '',
+        amount: '',
+        date: ''
+      })
     }
-
-    onSaveExpense(expenseResult);
-
-    // Limpiar mi formulario
-    setExpense({
-      title: '',
-      amount: '',
-      date: ''
-    })
   };
 
   // Noten que a partir de la versión 5.1 de styled components se usan las transient props
@@ -116,25 +139,38 @@ const ExpenseForm = ({onSaveExpense}) => {
   // Por eso se tienen que señalar las props que no queremos en el DOM,como invalid
 
   return (
-    <form onSubmit={submitHandler}>
-      <FormControls>
-        <FormControl $invalid={!isValid}>
-          <label>Descripción</label>
-          <input name="title" type="text" value={expense.title} onChange={dataChangeHandler} />
-        </FormControl>
-        <FormControl $invalid={!isValid}>
-          <label>Monto</label>
-          <input name="amount" type="number" min="1" step="1" value={expense.amount} onChange={dataChangeHandler} />
-        </FormControl>
-        <FormControl $invalid={!isValid}>
-          <label>Fecha</label>
-          <input name="date" type="date" min="2024-01-01" max="2027-12-31" value={expense.date} onChange={dataChangeHandler} />
-        </FormControl>
-      </FormControls>
-      <FormActions>
-        <Button type="submit">Agregar</Button>
-      </FormActions>
-    </form>
+    <>
+      <form onSubmit={submitHandler}>
+        <FormControls>
+          <FormControl $invalid={!isTitleValid}>
+            <label>Descripción</label>
+            <input
+              name="title"
+              type="text"
+              value={expense.title}
+              onChange={dataChangeHandler}
+              ref={titleRef}
+            />
+          </FormControl>
+          <FormControl $invalid={!isAmountValid}>
+            <label>Monto</label>
+            <input name="amount" type="number" min="1" step="1" value={expense.amount} onChange={dataChangeHandler} />
+          </FormControl>
+          <FormControl $invalid={!isDateValid}>
+            <label>Fecha</label>
+            <input name="date" type="date" min="2024-01-01" max="2027-12-31" value={expense.date} onChange={dateChangeHandler} />
+          </FormControl>
+        </FormControls>
+        <FormActions>
+          <Button type="submit">Agregar</Button>
+        </FormActions>
+      </form>
+      {
+        error && (
+          <Modal title={error.title} message={error.message} onConfirm={toggleModal} />
+        )
+      }
+    </>
   )
 }
 
